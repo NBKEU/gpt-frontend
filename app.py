@@ -8,7 +8,7 @@ import os
 import httpx
 
 APP_NAME = os.getenv("APP_NAME", "Virtual Terminal Frontend")
-BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://localhost:8000").rstrip("/")
+BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "https://befe.onrender.com").rstrip("/")
 
 app = FastAPI(title=APP_NAME)
 
