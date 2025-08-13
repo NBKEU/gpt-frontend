@@ -1,0 +1,28 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Result</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      {% if ok %}
+        <h2>Payment Processed</h2>
+        <p><b>Status:</b> {{ result.status }}</p>
+        <p><b>Reference:</b> {{ result.reference }}</p>
+        <p><b>Mode:</b> {{ result.mode }}</p>
+        <a href="/" class="link">New Payment</a> ·
+        <a href="/dashboard" class="link">Dashboard</a>
+      {% else %}
+        <h2>Error</h2>
+        <p>{{ error }}</p>
+        <a href="/" class="link">Back</a>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

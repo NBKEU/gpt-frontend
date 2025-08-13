@@ -1,0 +1,85 @@
+
+{% set css = '/static/css/styles.css' %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Virtual Terminal</title>
+  <link rel="stylesheet" href="{{ css }}">
+</head>
+<body>
+  <div class="wrap">
+    <h1>Virtual Card Terminal</h1>
+    <form action="/process" method="post" class="card">
+      <div class="field">
+        <label>Card Number</label>
+        <input name="card_number" placeholder="4111111111111111" required>
+      </div>
+
+      <div class="field">
+        <label>Protocol</label>
+        <select name="protocol" required>
+          {% for p in protocols %}
+          <option value="{{ p }}">{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Auth Code</label>
+        <input name="auth_code" placeholder="4 or 6 digits" required>
+      </div>
+
+      <div class="field two-col">
+        <div>
+          <label>Amount</label>
+          <input name="amount" type="number" step="0.01" placeholder="100.00" required>
+        </div>
+        <div>
+          <label>Payout Type</label>
+          <select name="payout_type" id="payoutType" required onchange="toggleNetwork()">
+            <option value="CRYPTO">CRYPTO</option>
+            <option value="BANK">BANK</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field" id="cryptoNet">
+        <label>Crypto Network</label>
+        <select name="payout_network">
+          <option value="ERC20">ERC20</option>
+          <option value="TRC20">TRC20</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label id="targetLabel">Wallet Address</label>
+        <input name="payout_target" id="payoutTarget" placeholder="0x... or T..." required>
+      </div>
+
+      <button type="submit">Process Payment</button>
+      <p class="hint">Backend: <code>{{ backend }}</code></p>
+      <p><a href="/dashboard" class="link">Open Dashboard</a></p>
+    </form>
+  </div>
+<script>
+function toggleNetwork(){
+  const type = document.getElementById('payoutType').value;
+  const net = document.getElementById('cryptoNet');
+  const label = document.getElementById('targetLabel');
+  const target = document.getElementById('payoutTarget');
+  if(type === 'CRYPTO'){
+    net.style.display = 'block';
+    label.innerText = 'Wallet Address';
+    target.placeholder = '0x... or T...';
+  } else {
+    net.style.display = 'none';
+    label.innerText = 'Bank Account Number';
+    target.placeholder = '1234567890';
+  }
+}
+toggleNetwork();
+</script>
+</body>
+</html>

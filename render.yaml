@@ -1,0 +1,13 @@
+
+services:
+  - type: web
+    name: card-terminal-frontend-fastapi
+    env: docker
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: BACKEND_BASE_URL
+        sync: false
+      - key: APP_NAME
+        value: Virtual Terminal Frontend
+    healthCheckPath: /health
