@@ -1,18 +1,23 @@
-
-from fastapi import FastAPI, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, Request, Form
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
 import os
 import httpx
 
+# App config
 APP_NAME = os.getenv("APP_NAME", "Virtual Terminal Frontend")
-BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "https://befe.onrender.com").rstrip("/")
+
+# Backend base URL - must be set in environment variables
+BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL")
+if not BACKEND_BASE_URL:
+    raise RuntimeError("BACKEND_BASE_URL environment variable is not set")
+BACKEND_BASE_URL = BACKEND_BASE_URL.rstrip("/")
 
 app = FastAPI(title=APP_NAME)
 
-# CORS for Android terminals if needed
+# CORS for browser/Android terminals if needed
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,6 +29,7 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+# Protocol list
 PROTOCOLS = [
     "POS Terminal -101.1 (4-digit approval)",
     "POS Terminal -101.4 (6-digit approval)",
@@ -44,14 +50,16 @@ def index(request: Request):
     })
 
 @app.post("/process", response_class=HTMLResponse)
-async def process(request: Request,
-                  card_number: str = Form(...),
-                  protocol: str = Form(...),
-                  auth_code: str = Form(...),
-                  amount: float = Form(...),
-                  payout_type: str = Form(...),
-                  payout_network: str = Form(None),
-                  payout_target: str = Form(...)):
+async def process(
+    request: Request,
+    card_number: str = Form(...),
+    protocol: str = Form(...),
+    auth_code: str = Form(...),
+    amount: float = Form(...),
+    payout_type: str = Form(...),
+    payout_network: str = Form(None),
+    payout_target: str = Form(...)
+):
     payload = {
         "card_number": card_number,
         "protocol": protocol,
@@ -61,9 +69,11 @@ async def process(request: Request,
         "payout_network": payout_network if payout_type == "CRYPTO" else None,
         "payout_target": payout_target
     }
+
     async with httpx.AsyncClient(timeout=25) as client:
         try:
-            r = await client.post(f"{BACKEND_BASE_URL}/api/v1/transactions/process", json=payload)
+            # ✅ Use correct backend endpoint
+            r = await client.post(f"{BACKEND_BASE_URL}/process", json=payload)
             r.raise_for_status()
             data = r.json()
         except httpx.HTTPStatusError as e:
@@ -81,6 +91,7 @@ async def process(request: Request,
                 "error": str(ex),
                 "backend": BACKEND_BASE_URL
             }, status_code=500)
+
     return templates.TemplateResponse("result.html", {
         "request": request,
         "ok": True,
@@ -90,7 +101,6 @@ async def process(request: Request,
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request):
-    # simply embed backend dashboard in an iframe for convenience
     backend_dash = f"{BACKEND_BASE_URL}/dashboard"
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
