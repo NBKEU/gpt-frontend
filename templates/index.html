@@ -1,84 +1,134 @@
-
-{% set css = '/static/css/styles.css' %}
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Virtual Terminal</title>
-  <link rel="stylesheet" href="{{ css }}">
+  <meta charset="utf-8" />
+  <title>Virtual Card Terminal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, Arial; background:#0b1020; color:#e7e7ea; margin:0; }
+    .wrap { max-width: 780px; margin: 32px auto; padding: 16px; }
+    .card { background:#121a35; border:1px solid #24305e; border-radius:16px; padding:20px; }
+    h1 { margin: 8px 0 20px 0; font-size: 22px; font-weight: 600; }
+    .row { display:flex; gap:12px; }
+    .col { flex:1; }
+    label { display:block; font-size:13px; margin-bottom:6px; color:#b9c0dd; }
+    input, select { width:100%; padding:10px 12px; border-radius:10px; background:#0e1530; border:1px solid #2a396d; color:#e7e7ea; }
+    button { margin-top:14px; width:100%; padding:12px; border-radius:12px; background:#2b7cff; color:white; border:0; font-weight:600; cursor:pointer; }
+    button:disabled { opacity:.6; cursor:not-allowed; }
+    .note { font-size:12px; color:#8da2d8; margin-top:10px; }
+    .result { margin-top:14px; padding:12px; border-radius:10px; background:#0e1530; border:1px solid #2a396d; }
+    a.link { color:#9cc0ff; text-decoration: none; }
+  </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Virtual Card Terminal</h1>
-    <form action="/process" method="post" class="card">
-      <div class="field">
+    <div class="card">
+      <h1>Virtual Card Terminal</h1>
+
+      <form id="cardForm" autocomplete="off">
+        <input type="hidden" name="payout_type" value="BANK" />
+
         <label>Card Number</label>
-        <input name="card_number" placeholder="4111111111111111" required>
-      </div>
+        <input name="card_number" placeholder="4111111111111111" required />
 
-      <div class="field">
-        <label>Protocol</label>
-        <select name="protocol" required>
-          {% for p in protocols %}
-          <option value="{{ p }}">{{ p }}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Auth Code</label>
-        <input name="auth_code" placeholder="4 or 6 digits" required>
-      </div>
-
-      <div class="field two-col">
-        <div>
-          <label>Amount</label>
-          <input name="amount" type="number" step="0.01" placeholder="100.00" required>
+        <div class="row">
+          <div class="col">
+            <label>Expiry Month</label>
+            <input name="expiry_month" placeholder="MM" required />
+          </div>
+          <div class="col">
+            <label>Expiry Year</label>
+            <input name="expiry_year" placeholder="YYYY" required />
+          </div>
+          <div class="col">
+            <label>CVV</label>
+            <input name="cvv" placeholder="123" required />
+          </div>
         </div>
-        <div>
-          <label>Payout Type</label>
-          <select name="payout_type" id="payoutType" required onchange="toggleNetwork()">
-            <option value="CRYPTO">CRYPTO</option>
-            <option value="BANK">BANK</option>
-          </select>
+
+        <div class="row">
+          <div class="col">
+            <label>Protocol</label>
+            <select name="protocol" required>
+              <option value="POS Terminal -101.1 (4-digit approval)">POS Terminal -101.1 (4-digit approval)</option>
+              <option value="POS Terminal -101.4 (6-digit approval)">POS Terminal -101.4 (6-digit approval)</option>
+              <option value="POS Terminal -101.6 (Pre-authorization)">POS Terminal -101.6 (Pre-authorization)</option>
+              <option value="POS Terminal -101.7 (4-digit approval)">POS Terminal -101.7 (4-digit approval)</option>
+              <option value="POS Terminal -101.8 (PIN-LESS transaction)">POS Terminal -101.8 (PIN-LESS transaction)</option>
+              <option value="POS Terminal -201.1 (6-digit approval)">POS Terminal -201.1 (6-digit approval)</option>
+              <option value="POS Terminal -201.3 (6-digit approval)">POS Terminal -201.3 (6-digit approval)</option>
+              <option value="POS Terminal -201.5 (6-digit approval)">POS Terminal -201.5 (6-digit approval)</option>
+            </select>
+          </div>
+          <div class="col">
+            <label>Auth Code</label>
+            <input name="auth_code" placeholder="Provided by customer" required />
+          </div>
+          <div class="col">
+            <label>Amount (USD)</label>
+            <input name="amount" type="number" step="0.01" min="0.01" placeholder="100.00" required />
+          </div>
         </div>
-      </div>
 
-      <div class="field" id="cryptoNet">
-        <label>Crypto Network</label>
-        <select name="payout_network">
-          <option value="ERC20">ERC20</option>
-          <option value="TRC20">TRC20</option>
-        </select>
-      </div>
+        <button id="submitBtn" type="submit">Process Payment → Send to Default Bank</button>
+        <div class="note">Payout destination is fixed by the backend to your default account.</div>
 
-      <div class="field">
-        <label id="targetLabel">Wallet Address</label>
-        <input name="payout_target" id="payoutTarget" placeholder="0x... or T..." required>
-      </div>
+        <div id="result" class="result" style="display:none;"></div>
+      </form>
 
-      <button type="submit">Process Payment</button>
-      <p><a href="/dashboard" class="link">Open Dashboard</a></p>
-    </form>
+      <p class="note" style="margin-top:12px;">
+        <a class="link" href="/dashboard" target="_blank">Open Dashboard</a>
+      </p>
+    </div>
   </div>
-<script>
-function toggleNetwork(){
-  const type = document.getElementById('payoutType').value;
-  const net = document.getElementById('cryptoNet');
-  const label = document.getElementById('targetLabel');
-  const target = document.getElementById('payoutTarget');
-  if(type === 'CRYPTO'){
-    net.style.display = 'block';
-    label.innerText = 'Wallet Address';
-    target.placeholder = '0x... or T...';
-  } else {
-    net.style.display = 'none';
-    label.innerText = 'Bank Account Number';
-    target.placeholder = '1234567890';
-  }
-}
-toggleNetwork();
-</script>
+
+  <script>
+    const BACKEND_URL = (window.BACKEND_URL || "{{ backend_url|default('') }}"); // injected by frontend server if you use templates
+
+    const form = document.getElementById('cardForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const resultBox = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      resultBox.style.display = 'none';
+      resultBox.textContent = '';
+
+      const fd = new FormData(form);
+      const payload = {
+        card_number:  fd.get('card_number'),
+        expiry_month: fd.get('expiry_month'),
+        expiry_year:  fd.get('expiry_year'),
+        cvv:          fd.get('cvv'),
+        protocol:     fd.get('protocol'),
+        auth_code:    fd.get('auth_code'),
+        amount:       Number(fd.get('amount')),
+        payout_type:  'BANK',           // always BANK
+        // payout_target intentionally omitted; backend forces default
+      };
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/v1/transactions/process`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        resultBox.style.display = 'block';
+        if (res.ok) {
+          resultBox.textContent = `Status: ${data.status} | Reference: ${data.reference} | Mode: ${data.mode}`;
+        } else {
+          resultBox.textContent = `Error: ${data.detail || JSON.stringify(data)}`;
+        }
+      } catch (err) {
+        resultBox.style.display = 'block';
+        resultBox.textContent = 'Network error: ' + err;
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
