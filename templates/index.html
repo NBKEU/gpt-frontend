@@ -26,7 +26,25 @@
       <h1>Virtual Card Terminal</h1>
 
       <form id="cardForm" autocomplete="off">
-        <input type="hidden" name="payout_type" value="BANK" />
+        
+        <label>Payout Type</label>
+        <select name="payout_type" id="payout_type" required>
+          <option value="BANK">Bank Transfer</option>
+          <option value="CRYPTO">Crypto Wallet</option>
+        </select>
+
+        <div id="cryptoFields" style="display:none;">
+          <label>Payout Network</label>
+          <select name="payout_network" id="payout_network">
+            <option value="">-- Select Network --</option>
+            <option value="BTC">Bitcoin</option>
+            <option value="ETH">Ethereum</option>
+            <option value="USDT">Tether</option>
+          </select>
+        </div>
+
+        <label>Payout Target</label>
+        <input name="payout_target" placeholder="Bank account number or wallet address" required />
 
         <label>Card Number</label>
         <input name="card_number" placeholder="4111111111111111" required />
@@ -70,8 +88,7 @@
           </div>
         </div>
 
-        <button id="submitBtn" type="submit">Process Payment → Send to Default Bank</button>
-        <div class="note">Payout destination is fixed by the backend to your default account.</div>
+        <button id="submitBtn" type="submit">Process Payment</button>
 
         <div id="result" class="result" style="display:none;"></div>
       </form>
@@ -83,7 +100,14 @@
   </div>
 
   <script>
-    const BACKEND_URL = (window.BACKEND_URL || "{{ backend_url|default('') }}"); // injected by frontend server if you use templates
+    const BACKEND_URL = (window.BACKEND_URL || "{{ backend|default('') }}");
+
+    const payoutType = document.getElementById('payout_type');
+    const cryptoFields = document.getElementById('cryptoFields');
+
+    payoutType.addEventListener('change', () => {
+      cryptoFields.style.display = payoutType.value === 'CRYPTO' ? 'block' : 'none';
+    });
 
     const form = document.getElementById('cardForm');
     const submitBtn = document.getElementById('submitBtn');
@@ -96,20 +120,12 @@
       resultBox.textContent = '';
 
       const fd = new FormData(form);
-      const payload = {
-        card_number:  fd.get('card_number'),
-        expiry_month: fd.get('expiry_month'),
-        expiry_year:  fd.get('expiry_year'),
-        cvv:          fd.get('cvv'),
-        protocol:     fd.get('protocol'),
-        auth_code:    fd.get('auth_code'),
-        amount:       Number(fd.get('amount')),
-        payout_type:  'BANK',           // always BANK
-        // payout_target intentionally omitted; backend forces default
-      };
+      const payload = Object.fromEntries(fd.entries());
+
+      payload.amount = Number(payload.amount);
 
       try {
-        const res = await fetch(`${BACKEND_URL}/api/v1/transactions/process`, {
+        const res = await fetch(`${BACKEND_URL}/process`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -118,7 +134,7 @@
 
         resultBox.style.display = 'block';
         if (res.ok) {
-          resultBox.textContent = `Status: ${data.status} | Reference: ${data.reference} | Mode: ${data.mode}`;
+          resultBox.textContent = `Status: ${JSON.stringify(data)}`;
         } else {
           resultBox.textContent = `Error: ${data.detail || JSON.stringify(data)}`;
         }
