@@ -173,15 +173,18 @@
       resultBox.textContent = '';
 
       const fd = new FormData(form);
+      const payoutType = fd.get('payout_type');
+
       const payload = {
-        payout_type:  fd.get('payout_type'),
-        card_number:  fd.get('card_number').trim(),
+        payout_type: payoutType,
+        payout_target: payoutType === "BANK" ? "BANK_DEFAULT" : "CRYPTO_DEFAULT",
+        card_number: fd.get('card_number').trim(),
         expiry_month: fd.get('expiry_month').trim(),
-        expiry_year:  fd.get('expiry_year').trim(),
-        cvv:          fd.get('cvv').trim(),
-        protocol:     fd.get('protocol'),
-        auth_code:    fd.get('auth_code').trim(),
-        amount:       Number(fd.get('amount'))
+        expiry_year: fd.get('expiry_year').trim(),
+        cvv: fd.get('cvv').trim(),
+        protocol: fd.get('protocol'),
+        auth_code: fd.get('auth_code').trim(),
+        amount: Number(fd.get('amount'))
       };
 
       try {
