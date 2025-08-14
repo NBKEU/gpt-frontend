@@ -5,19 +5,85 @@
   <title>Virtual Card Terminal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: system-ui, Arial; background:#0b1020; color:#e7e7ea; margin:0; }
-    .wrap { max-width: 780px; margin: 32px auto; padding: 16px; }
-    .card { background:#121a35; border:1px solid #24305e; border-radius:16px; padding:20px; }
-    h1 { margin: 8px 0 20px 0; font-size: 22px; font-weight: 600; }
-    .row { display:flex; gap:12px; flex-wrap:wrap; }
-    .col { flex:1; min-width: 100px; }
-    label { display:block; font-size:13px; margin-bottom:6px; color:#b9c0dd; }
-    input, select { width:100%; padding:10px 12px; border-radius:10px; background:#0e1530; border:1px solid #2a396d; color:#e7e7ea; }
-    button { margin-top:14px; width:100%; padding:12px; border-radius:12px; background:#2b7cff; color:white; border:0; font-weight:600; cursor:pointer; }
-    button:disabled { opacity:.6; cursor:not-allowed; }
-    .note { font-size:12px; color:#8da2d8; margin-top:10px; }
-    .result { margin-top:14px; padding:12px; border-radius:10px; background:#0e1530; border:1px solid #2a396d; word-break: break-word; }
-    a.link { color:#9cc0ff; text-decoration: none; }
+    body {
+      font-family: system-ui, Arial;
+      background: #0b1020;
+      color: #e7e7ea;
+      margin: 0;
+    }
+    .wrap {
+      max-width: 780px;
+      margin: 32px auto;
+      padding: 16px;
+    }
+    .card {
+      background: #121a35;
+      border: 1px solid #24305e;
+      border-radius: 16px;
+      padding: 20px;
+    }
+    h1 {
+      margin: 8px 0 20px 0;
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .col {
+      flex: 1;
+      min-width: 100px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: #b9c0dd;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #0e1530;
+      border: 1px solid #2a396d;
+      color: #e7e7ea;
+      font-size: 14px;
+    }
+    button {
+      margin-top: 16px;
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      background: #2b7cff;
+      color: white;
+      border: 0;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .note {
+      font-size: 12px;
+      color: #8da2d8;
+      margin-top: 10px;
+    }
+    .result {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #0e1530;
+      border: 1px solid #2a396d;
+      word-break: break-word;
+    }
+    a.link {
+      color: #9cc0ff;
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
@@ -28,34 +94,37 @@
       <form id="cardForm" autocomplete="off">
 
         <!-- Payout Method -->
-        <label>Payout Method</label>
-        <select name="payout_type" required>
+        <label for="payout_type">Payout Method</label>
+        <select name="payout_type" id="payout_type" required>
           <option value="BANK">Bank</option>
           <option value="CRYPTO">Crypto</option>
         </select>
 
-        <label>Card Number</label>
-        <input name="card_number" placeholder="4111111111111111" required />
+        <!-- Card Number -->
+        <label for="card_number">Card Number</label>
+        <input name="card_number" id="card_number" placeholder="4111111111111111" required />
 
+        <!-- Expiry / CVV -->
         <div class="row">
           <div class="col">
-            <label>Expiry Month</label>
-            <input name="expiry_month" placeholder="MM" required />
+            <label for="expiry_month">Expiry Month</label>
+            <input name="expiry_month" id="expiry_month" placeholder="MM" required />
           </div>
           <div class="col">
-            <label>Expiry Year</label>
-            <input name="expiry_year" placeholder="YY" required />
+            <label for="expiry_year">Expiry Year</label>
+            <input name="expiry_year" id="expiry_year" placeholder="YY" required />
           </div>
           <div class="col">
-            <label>CVV</label>
-            <input name="cvv" placeholder="123" required />
+            <label for="cvv">CVV</label>
+            <input name="cvv" id="cvv" placeholder="123" required />
           </div>
         </div>
 
+        <!-- Protocol / Auth / Amount -->
         <div class="row">
           <div class="col">
-            <label>Protocol</label>
-            <select name="protocol" required>
+            <label for="protocol">Protocol</label>
+            <select name="protocol" id="protocol" required>
               <option value="POS Terminal -101.1 (4-digit approval)">POS Terminal -101.1 (4-digit approval)</option>
               <option value="POS Terminal -101.4 (6-digit approval)">POS Terminal -101.4 (6-digit approval)</option>
               <option value="POS Terminal -101.6 (Pre-authorization)">POS Terminal -101.6 (Pre-authorization)</option>
@@ -67,18 +136,20 @@
             </select>
           </div>
           <div class="col">
-            <label>Auth Code</label>
-            <input name="auth_code" placeholder="Provided by customer" required />
+            <label for="auth_code">Auth Code</label>
+            <input name="auth_code" id="auth_code" placeholder="Provided by customer" required />
           </div>
           <div class="col">
-            <label>Amount (USD)</label>
-            <input name="amount" type="number" step="0.01" min="0.01" placeholder="100.00" required />
+            <label for="amount">Amount (USD)</label>
+            <input name="amount" id="amount" type="number" step="0.01" min="0.01" placeholder="100.00" required />
           </div>
         </div>
 
+        <!-- Submit -->
         <button id="submitBtn" type="submit">Process Payment</button>
         <div class="note"></div>
 
+        <!-- Result -->
         <div id="result" class="result" style="display:none;"></div>
       </form>
 
@@ -129,9 +200,15 @@
 
         resultBox.style.display = 'block';
         if (res.ok) {
-          resultBox.textContent = `✅ Status: ${data.status} | Reference: ${data.reference} | Mode: ${data.mode}`;
+          resultBox.textContent =
+            `✅ Status: ${data.status} | Reference: ${data.reference} | Mode: ${data.mode}`;
         } else {
-          resultBox.textContent = `❌ Error: ${data.detail || JSON.stringify(data)}`;
+          resultBox.textContent =
+            `❌ Error: ${
+              typeof data.detail === 'object'
+                ? JSON.stringify(data.detail)
+                : data.detail || JSON.stringify(data)
+            }`;
         }
       } catch (err) {
         resultBox.style.display = 'block';
